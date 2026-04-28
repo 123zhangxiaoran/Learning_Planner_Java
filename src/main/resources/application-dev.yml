@@ -1,0 +1,46 @@
+# 开发环境配置
+server:
+  port: 8820
+  servlet:
+    context-path: /api
+
+spring:
+  # 数据源（本地MySQL）
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/learning_planner?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root  # 你的本地MySQL用户名
+    password: 123456  # 你的本地MySQL密码
+  # Redis（本地）
+  data:
+    redis:
+      host: 192.168.190.128
+      port: 6379
+      database: 0
+  # Jackson 序列化（忽略null字段）
+  jackson:
+    default-property-inclusion: non_null
+
+# MyBatis-Plus：开发时开启SQL日志
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true  # 确保开启
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.ai.entity
+  #configuration:
+    #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印SQL到控制台
+
+# 日志：开发时输出debug级别，方便调试
+logging:
+  level:
+    com.ai: debug
+    org.springframework: info
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+
+jwt:
+  access-secret:
+    adwd1wd51515155da1d5ad15wdw511sa121
+  refresh-secret:
+    1496161faixhaifwfwf4wfwfwfa551dw15f

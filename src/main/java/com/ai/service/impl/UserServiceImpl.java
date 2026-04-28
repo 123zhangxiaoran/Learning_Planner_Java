@@ -1,0 +1,307 @@
+package com.ai.service.impl;
+
+import com.ai.common.Result;
+import com.ai.dto.UserDTO;
+import com.ai.entity.User;
+import com.ai.mapper.UserMapper;
+import com.ai.service.UserService;
+import com.ai.util.*;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import static com.ai.common.JwtConstant.REFRESH_TOKEN_MAX_AGE;
+import static com.ai.common.ResponseCode.*;
+import static com.ai.util.RedisUtil.*;
+
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl extends ServiceImpl<UserMapper, User>
+        implements UserService {
+
+    private final StringRedisTemplate stringRedisTemplate;
+    private final UserMapper userMapper;
+    private final JwtUtil jwtUtil;
+
+    /**
+     * 生成刷新令牌并设置Cookie，清理相关缓存
+     */
+    private void generateRefreshTokenAndCleanup(String phone, Long userId, HttpServletResponse response) {
+        String refreshToken = jwtUtil.generateRefreshToken(userId);
+
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        //cookie.setSecure(true); // 生产环境启用
+        cookie.setPath("/");
+        cookie.setDomain(null);
+        cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
+        response.addCookie(cookie);
+
+        // 清理相关缓存
+        stringRedisTemplate.delete(LOGIN_CODE_KEY + phone);
+        stringRedisTemplate.delete(REGISTER_LOCK_KEY + phone);
+        stringRedisTemplate.delete(PLAYER_EMPTY_PREFIX + phone);
+        stringRedisTemplate.delete(PLAYER_COOL_KEY + phone);
+    }
+
+    /**
+     * 构建用户DTO并生成访问令牌
+     */
+    private UserDTO buildUserDTO(User user) {
+        String accessToken = jwtUtil.generateAccessToken(user.getUserId());
+
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getUserId());
+        userDTO.setNickname(user.getNickname());
+        userDTO.setAccessToken(accessToken);
+        return userDTO;
+    }
+
+    /**
+     * 保存用户并返回登录结果
+     */
+    private Result<UserDTO> saveUserAndReturn(String phone, User user, HttpServletResponse response) {
+        if (!save(user)) {
+            return Result.fail(FAIL);
+        }
+        UserDTO userDTO = buildUserDTO(user);
+        generateRefreshTokenAndCleanup(phone, user.getUserId(), response);
+        setHash(phone, user);
+        return Result.success(userDTO);
+    }
+
+    /**
+     * 将id和昵称写入内存
+     */
+    private void setHash(String phone, User user) {
+        String id = String.valueOf(user.getUserId());
+        String nickname = user.getNickname();
+        stringRedisTemplate.opsForHash().put(PLAYER_EXIST_KEY + phone, "ID", id);
+        stringRedisTemplate.opsForHash().put(PLAYER_EXIST_KEY + phone, "NickName", nickname);
+        stringRedisTemplate.expire(PLAYER_EXIST_KEY + phone, PLAYER_EXIST_KEY_TTL, TimeUnit.SECONDS);
+    }
+
+    /**
+     * 根据手机号查询用户（带缓存）
+     */
+    private User findUserByPhone(String phone) {
+        return userMapper.selectOne(Wrappers.lambdaQuery(User.class).eq(User::getPhone, phone));
+    }
+
+    /**
+     * 创建新用户
+     */
+    private User createNewUser(String phone) {
+        User user = new User();
+        user.setPhone(phone);
+        user.setPassword(null);
+        user.setNickname("用户_" + RandomUtil.generateCode(12));
+        LocalDate now = LocalDate.now();
+        user.setCreateTime(now.atStartOfDay());
+        user.setUpdateTime(now.atStartOfDay());
+        user.setSalt(null);
+        return user;
+    }
+
+    /**
+     * 验证验证码
+     */
+    private boolean validateCode(String phone, String code) {
+        String cachedCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
+        return !Objects.equals(cachedCode, code);
+    }
+
+    //  发送验证码
+    @Override
+    public Result<String> sendCode(String phone) {
+        if (RegexUtil.isPhoneInvalid(phone)) {
+            return Result.fail(PHONE_INVALID);
+        }
+
+        if (stringRedisTemplate.hasKey(LOGIN_COOL_KEY + phone)) {
+            return Result.fail(TOO_MANY_REQUESTS);
+        }
+
+        String code = RandomUtil.generateCode(6);
+        stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(LOGIN_COOL_KEY + phone, "1", LOGIN_COOL_TTL, TimeUnit.SECONDS);
+
+        return Result.success(code);
+    }
+
+    //  手机号验证码登录
+    @Override
+    public Result<UserDTO> phoneLogin(String phone, String code, HttpServletResponse response) {
+        if (RegexUtil.isPhoneInvalid(phone)) {
+            return Result.fail(PHONE_INVALID);
+        }
+
+        if (RegexUtil.isCodeInvalid(code) || validateCode(phone, code)) {
+            return Result.fail(CODE_MISMATCH);
+        }
+        // 检查注册锁
+        if (stringRedisTemplate.hasKey(REGISTER_LOCK_KEY + phone)) {
+            return Result.fail(ACCOUNT_EXISTS);
+        }
+
+        User user;
+        // 检查缓存判断用户是否存在
+        if (!stringRedisTemplate.hasKey(PLAYER_EXIST_KEY + phone)) {
+            user = findUserByPhone(phone);
+            if (user == null) {
+                // 新用户注册
+                stringRedisTemplate.opsForValue().set(REGISTER_LOCK_KEY + phone, "1", REGISTER_LOCK_KEY_TTL, TimeUnit.SECONDS);
+                return saveUserAndReturn(phone, createNewUser(phone), response);
+            }else {
+                // 缓存用户存在标记
+                setHash(phone, user);
+                UserDTO userDTO = buildUserDTO(user);
+                generateRefreshTokenAndCleanup(phone, user.getUserId(), response);
+                return Result.success(userDTO);
+            }
+        }
+        if (validateCode(phone, code)) {
+            return Result.fail(CODE_MISMATCH);
+        }
+        String id = (String) stringRedisTemplate.opsForHash().get(PLAYER_EXIST_KEY + phone, "ID");
+        String nickname = (String) stringRedisTemplate.opsForHash().get(PLAYER_EXIST_KEY + phone, "NickName");
+        assert id != null;
+        String accessToken = jwtUtil.generateAccessToken(Long.valueOf(id));
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(Long.valueOf(id));
+        userDTO.setNickname(nickname);
+        userDTO.setAccessToken(accessToken);
+        // 清理相关缓存
+        stringRedisTemplate.delete(LOGIN_CODE_KEY + phone);
+        stringRedisTemplate.delete(REGISTER_LOCK_KEY + phone);
+        stringRedisTemplate.delete(PLAYER_EMPTY_PREFIX + phone);
+        stringRedisTemplate.delete(PLAYER_COOL_KEY + phone);
+        return Result.success(userDTO);
+    }
+
+    //  手机号密码登录
+    @Override
+    public Result<UserDTO> accountLogin(String phone, String password, HttpServletResponse response) {
+        if (RegexUtil.isPhoneInvalid(phone)) {
+            return Result.fail(PHONE_INVALID);
+        }
+
+        if (RegexUtil.isPassWordInvalid(password)) {
+            return Result.fail(PASSWORD_INVALID);
+        }
+
+        // 检查空值缓存
+        if (stringRedisTemplate.hasKey(PLAYER_EMPTY_PREFIX + phone)) {
+            return Result.fail(ACCOUNT_NOT_EXISTS);
+        }
+
+        User user = findUserByPhone(phone);
+        if (user == null) {
+            stringRedisTemplate.opsForValue().set(PLAYER_EMPTY_PREFIX + phone, "1", PLAYER_EMPTY_PREFIX_TTL, TimeUnit.SECONDS);
+            return Result.fail(ACCOUNT_NOT_EXISTS);
+        }
+
+        String dbEncryptedPwd = user.getPassword();
+        if (dbEncryptedPwd == null) {
+            return Result.fail(PASSWORD_NOT_SET);
+        }
+
+        String newEncryptedPwd = MD5Util.md5WithSalt(password, user.getSalt());
+        if (!dbEncryptedPwd.equals(newEncryptedPwd)) {
+            return Result.fail(PASSWORD_NOT);
+        }
+        setHash(phone,user);
+        UserDTO userDTO = buildUserDTO(user);
+        generateRefreshTokenAndCleanup(phone, user.getUserId(), response);
+        return Result.success(userDTO);
+    }
+
+    //  注册账号
+    @Override
+    public Result<UserDTO> sendUser(String phone, String password, String confirmPwd, String code, HttpServletResponse response) {
+        if (RegexUtil.isPhoneInvalid(phone)) {
+            return Result.fail(PHONE_INVALID);
+        }
+
+        if (RegexUtil.isPassWordInvalid(password)) {
+            return Result.fail(PASSWORD_INVALID);
+        }
+
+        if (RegexUtil.isPassWordInvalid(confirmPwd)) {
+            return Result.fail(REPASSWORD_INVALID);
+        }
+
+        if (!Objects.equals(password, confirmPwd)) {
+            return Result.fail(PASSWORD_MISMATCH);
+        }
+
+        if (RegexUtil.isCodeInvalid(code) || validateCode(phone, code)) {
+            return Result.fail(CODE_MISMATCH);
+        }
+
+        // 检查用户是否已存在
+        if (stringRedisTemplate.hasKey(REGISTER_LOCK_KEY + phone)
+                || stringRedisTemplate.hasKey(PLAYER_COOL_KEY + phone)
+                || stringRedisTemplate.hasKey(PLAYER_EXIST_KEY + phone)) {
+            return Result.fail(ACCOUNT_EXISTS);
+        }
+
+        if (userMapper.selectCount(new QueryWrapper<User>().eq("phone", phone)) > 0) {
+            stringRedisTemplate.opsForValue().set(PLAYER_COOL_KEY + phone, "1", PLAYER_COOL_KEY_TTL, TimeUnit.MINUTES);
+            return Result.fail(ACCOUNT_EXISTS);
+        }
+
+        // 创建新用户
+        stringRedisTemplate.opsForValue().set(REGISTER_LOCK_KEY + phone, "1", REGISTER_LOCK_KEY_TTL, TimeUnit.SECONDS);
+
+        String salt = RandomUtil.generateRandomString();
+        String encryptedPassword = MD5Util.md5WithSalt(password, salt);
+
+        User user = new User();
+        user.setPhone(phone);
+        user.setPassword(encryptedPassword);
+        user.setNickname("用户_" + RandomUtil.generateCode(12));
+        LocalDate now = LocalDate.now();
+        user.setCreateTime(now.atStartOfDay());
+        user.setUpdateTime(now.atStartOfDay());
+        user.setSalt(salt);
+
+        return saveUserAndReturn(phone, user, response);
+    }
+
+    //  退出登录
+    @Override
+    public Result<?> logout(HttpServletResponse response, String refreshToken) {
+
+        // 将长Token加入黑名单并清除Cookie
+        if (refreshToken != null) {
+            // 提取JTI存入Redis黑名单
+            Claims refreshClaims = jwtUtil.parseRefreshToken(refreshToken);
+            String refreshJti = refreshClaims.getId();
+            long refreshExpTime = refreshClaims.getExpiration().getTime();
+            long refreshTTL = refreshExpTime - System.currentTimeMillis();
+            // 长token退出之后加入黑名单
+            stringRedisTemplate.opsForValue().set(ACCESS_TOKEN_KEY + refreshJti, "1", refreshTTL, TimeUnit.MILLISECONDS);
+
+            // 清除浏览器中的Cookie
+            Cookie cookie = new Cookie("refreshToken", null);
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);  // 立即过期 = 清除
+            response.addCookie(cookie);
+        }
+
+        return Result.success();
+    }
+
+}

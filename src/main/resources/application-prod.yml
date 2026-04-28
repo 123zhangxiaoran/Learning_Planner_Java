@@ -1,0 +1,53 @@
+# 生产/比赛环境配置
+server:
+  port: 8820  # 可根据比赛要求修改端口
+  servlet:
+    context-path: /api
+
+spring:
+  # 数据源（比赛服务器MySQL，按实际情况修改）
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/learning_planner?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root  # 比赛服务器MySQL用户名
+    password: 123456  # 比赛服务器MySQL密码
+  # Redis（比赛服务器）
+  data:
+    redis:
+      host: 192.168.190.128
+      port: 6379
+      password: ""
+      database: 0
+  # Jackson 序列化（忽略null字段）
+  jackson:
+    default-property-inclusion: non_null
+
+# MyBatis-Plus：比赛时关闭SQL日志，避免控制台刷屏
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true  # 确保开启
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.ai.entity
+  # configuration:
+  #   log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 注释掉，关闭SQL日志
+
+# 日志：比赛时只记录info级别，保存到文件
+logging:
+  level:
+    com.ai: info
+    org.springframework: info
+  file:
+    name: logs/mystic-number-guess.log  # 自动创建logs文件夹并保存日志
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 7
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+jwt:
+  access-secret:
+    adwd1wd51515155da1d5ad15wdw511sa121
+  refresh-secret:
+    1496161faixhaifwfwf4wfwfwfa551dw15f

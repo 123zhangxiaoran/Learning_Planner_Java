@@ -1,0 +1,24 @@
+# IDEA 编辑器配置（团队统一，建议保留）
+.idea/
+
+# Maven 编译输出目录
+target/
+
+# 本地配置文件（含敏感信息）
+application-local.yml
+application-local.properties
+.env
+
+# 日志文件
+*.log
+
+# 操作系统文件
+Thumbs.db
+.DS_Store
+
+# Java 虚拟机崩溃日志
+hs_err_pid*
+
+# 临时文件
+*.tmp
+*.temp

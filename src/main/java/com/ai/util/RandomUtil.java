@@ -33,8 +33,8 @@ public class RandomUtil {
         return sb.toString();
     }
 
-    // 1小时的毫秒数
-    private static final long ONE_HOUR_MILLIS = 60 * 60 * 1000L; // 3,600,000
+    // 20分钟的毫秒数
+    private static final long ONE_HOUR_MILLIS = 10 * 60 * 1000L;
     public static long randomHourOffsetMillis() {
         long bound = 2 * ONE_HOUR_MILLIS + 1;
         return ThreadLocalRandom.current().nextLong(bound) - ONE_HOUR_MILLIS;

@@ -24,4 +24,6 @@ public class RedisUtil {
     public static final Long PLAYER_COOL_KEY_TTL = 30L;
     //  退出无用token
     public static final String ACCESS_TOKEN_KEY = "token:jti:";
+    //  api请求锁
+    public static final String LOCK_PREFIX = "api_lock:";
 }

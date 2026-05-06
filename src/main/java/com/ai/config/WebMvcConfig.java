@@ -14,7 +14,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final TokenInterceptor tokenInterceptor;
-    private final ApiLockInterceptor apiLockInterceptor; // 如果还没写，先注释掉
+    private final ApiLockInterceptor apiLockInterceptor;
 
     public WebMvcConfig(TokenInterceptor tokenInterceptor,
                         ApiLockInterceptor apiLockInterceptor) {
@@ -25,13 +25,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173")
+                .allowedOrigins("http://localhost:5173","http://192.168.87.28:5173")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .exposedHeaders("Set-Cookie")
                 .allowCredentials(true);
     }
 
+    //  拦截器的设置
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // 1. Token 拦截器

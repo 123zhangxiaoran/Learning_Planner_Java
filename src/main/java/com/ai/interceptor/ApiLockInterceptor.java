@@ -1,5 +1,6 @@
 package com.ai.interceptor;
 
+import com.ai.common.ResponseCode;
 import com.ai.util.RedisLockUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,14 +37,14 @@ public class ApiLockInterceptor implements HandlerInterceptor {
         // 尝试获取分布式锁（10秒超时自动释放）
         String lockValue = redisLockUtil.tryLock(lockKey, 10, TimeUnit.SECONDS);
         if (lockValue == null) {
-            // 未获取到锁，返回 429 Too Many Requests
-            response.setStatus(429);
+            // 未获取到锁，返回 405
+            response.setStatus(405);
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":429,\"msg\":\"操作频繁，请稍后再试\"}");
+            response.getWriter().write(String.valueOf(ResponseCode.TOO_MANY_REQUESTS));
             return false;
         }
 
-        // 把锁的 key 存入 request，供 afterCompletion 释放
+        // 把锁的 key，value 存入 request，供 afterCompletion 释放
         request.setAttribute("lockKey", lockKey);
         request.setAttribute("lockValue", lockValue);
         return true;

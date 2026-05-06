@@ -8,11 +8,12 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static com.ai.util.RedisUtil.LOCK_PREFIX;
+
 @Component
 public class RedisLockUtil {
 
     private final StringRedisTemplate redisTemplate;
-    private static final String LOCK_PREFIX = "api_lock:";
 
     // 释放锁的 Lua 脚本（原子操作：值匹配才删除）
     private static final String UNLOCK_SCRIPT =

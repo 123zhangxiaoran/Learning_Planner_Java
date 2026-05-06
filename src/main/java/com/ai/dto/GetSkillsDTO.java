@@ -6,7 +6,10 @@ import java.util.List;
 
 @Data
 public class GetSkillsDTO {
+    private Long userId;
     private List<String> jobs;
+    private String jobToken;
+    private Boolean isNews;
 }
 
 

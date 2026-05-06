@@ -41,7 +41,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true);
-        //cookie.setSecure(true); // 生产环境启用
         cookie.setPath("/");
         cookie.setDomain(null);
         cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
@@ -50,8 +49,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 清理相关缓存
         stringRedisTemplate.delete(LOGIN_CODE_KEY + phone);
         stringRedisTemplate.delete(REGISTER_LOCK_KEY + phone);
-        stringRedisTemplate.delete(PLAYER_EMPTY_PREFIX + phone);
-        stringRedisTemplate.delete(PLAYER_COOL_KEY + phone);
+        stringRedisTemplate.delete(USER_EMPTY_PREFIX + phone);
+        stringRedisTemplate.delete(USER_COOL_KEY + phone);
     }
 
     /**
@@ -86,9 +85,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private void setHash(String phone, User user) {
         String id = String.valueOf(user.getUserId());
         String nickname = user.getNickname();
-        stringRedisTemplate.opsForHash().put(PLAYER_EXIST_KEY + phone, "ID", id);
-        stringRedisTemplate.opsForHash().put(PLAYER_EXIST_KEY + phone, "NickName", nickname);
-        stringRedisTemplate.expire(PLAYER_EXIST_KEY + phone, PLAYER_EXIST_KEY_TTL, TimeUnit.SECONDS);
+        stringRedisTemplate.opsForHash().put(USER_EXIST_KEY + phone, "ID", id);
+        stringRedisTemplate.opsForHash().put(USER_EXIST_KEY + phone, "NickName", nickname);
+        stringRedisTemplate.expire(USER_EXIST_KEY + phone, USER_EXIST_KEY_TTL, TimeUnit.SECONDS);
     }
 
     /**
@@ -156,7 +155,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         User user;
         // 检查缓存判断用户是否存在
-        if (!stringRedisTemplate.hasKey(PLAYER_EXIST_KEY + phone)) {
+        if (!stringRedisTemplate.hasKey(USER_EXIST_KEY + phone)) {
             user = findUserByPhone(phone);
             if (user == null) {
                 // 新用户注册
@@ -173,8 +172,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (validateCode(phone, code)) {
             return Result.fail(CODE_MISMATCH);
         }
-        String id = (String) stringRedisTemplate.opsForHash().get(PLAYER_EXIST_KEY + phone, "ID");
-        String nickname = (String) stringRedisTemplate.opsForHash().get(PLAYER_EXIST_KEY + phone, "NickName");
+        String id = (String) stringRedisTemplate.opsForHash().get(USER_EXIST_KEY + phone, "ID");
+        String nickname = (String) stringRedisTemplate.opsForHash().get(USER_EXIST_KEY + phone, "NickName");
         assert id != null;
         String accessToken = jwtUtil.generateAccessToken(Long.valueOf(id));
         UserDTO userDTO = new UserDTO();
@@ -184,8 +183,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 清理相关缓存
         stringRedisTemplate.delete(LOGIN_CODE_KEY + phone);
         stringRedisTemplate.delete(REGISTER_LOCK_KEY + phone);
-        stringRedisTemplate.delete(PLAYER_EMPTY_PREFIX + phone);
-        stringRedisTemplate.delete(PLAYER_COOL_KEY + phone);
+        stringRedisTemplate.delete(USER_EMPTY_PREFIX + phone);
+        stringRedisTemplate.delete(USER_COOL_KEY + phone);
         return Result.success(userDTO);
     }
 
@@ -201,13 +200,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
 
         // 检查空值缓存
-        if (stringRedisTemplate.hasKey(PLAYER_EMPTY_PREFIX + phone)) {
+        if (stringRedisTemplate.hasKey(USER_EMPTY_PREFIX + phone)) {
             return Result.fail(ACCOUNT_NOT_EXISTS);
         }
 
         User user = findUserByPhone(phone);
         if (user == null) {
-            stringRedisTemplate.opsForValue().set(PLAYER_EMPTY_PREFIX + phone, "1", PLAYER_EMPTY_PREFIX_TTL, TimeUnit.SECONDS);
+            stringRedisTemplate.opsForValue().set(USER_EMPTY_PREFIX + phone, "1", USER_EMPTY_PREFIX_TTL, TimeUnit.SECONDS);
             return Result.fail(ACCOUNT_NOT_EXISTS);
         }
 
@@ -251,13 +250,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         // 检查用户是否已存在
         if (stringRedisTemplate.hasKey(REGISTER_LOCK_KEY + phone)
-                || stringRedisTemplate.hasKey(PLAYER_COOL_KEY + phone)
-                || stringRedisTemplate.hasKey(PLAYER_EXIST_KEY + phone)) {
+                || stringRedisTemplate.hasKey(USER_COOL_KEY + phone)
+                || stringRedisTemplate.hasKey(USER_EXIST_KEY + phone)) {
             return Result.fail(ACCOUNT_EXISTS);
         }
 
         if (userMapper.selectCount(new QueryWrapper<User>().eq("phone", phone)) > 0) {
-            stringRedisTemplate.opsForValue().set(PLAYER_COOL_KEY + phone, "1", PLAYER_COOL_KEY_TTL, TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set(USER_COOL_KEY + phone, "1", USER_COOL_KEY_TTL, TimeUnit.MINUTES);
             return Result.fail(ACCOUNT_EXISTS);
         }
 

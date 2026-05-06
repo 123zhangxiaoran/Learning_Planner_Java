@@ -28,7 +28,8 @@ public class AgentController {
     public Result<String> saveJobs(@RequestBody AgentTextDTO dto) {
         List<String> jobs = dto.getJobs();
         Long userId = dto.getUserId();
-        return agentService.saveJobs(jobs, userId);
+        String jobToken = dto.getJobToken();
+        return agentService.saveJobs(jobs, userId, jobToken);
     }
 
     //  接收前端页面2的会话返回技能

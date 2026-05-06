@@ -13,7 +13,7 @@ public interface AgentService extends IService<UserCareerGoal> {
     //  接收页面1的会话
     Result<String> getJobsByMajor(AgentTextDTO dto);
     //  保存用户选择的岗位
-    Result<String> saveJobs(List<String>jobs, Long userId);
+    Result<String> saveJobs(List<String>jobs, Long userId, String jobToken);
     //  接收页面2的会话
     Result<String> getSkillsByJob(GetSkillsDTO dto);
     //  页面2分析技能

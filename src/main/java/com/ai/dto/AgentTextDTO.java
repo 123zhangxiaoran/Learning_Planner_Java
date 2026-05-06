@@ -9,4 +9,5 @@ public class AgentTextDTO {
     private String major;
     private List<String> jobs;
     private Long userId;
+    private String jobToken;
 }

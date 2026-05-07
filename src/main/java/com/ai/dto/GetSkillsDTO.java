@@ -10,6 +10,7 @@ public class GetSkillsDTO {
     private List<String> jobs;
     private String jobToken;
     private Boolean isNews;
+    private Boolean newData;
 }
 
 

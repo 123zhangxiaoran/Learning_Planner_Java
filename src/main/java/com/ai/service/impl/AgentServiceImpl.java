@@ -38,7 +38,6 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
      * 将岗位名称写入内存
      */
     private void setCareer(Long userId,List<String> career) {
-        System.out.println(career);
         stringRedisTemplate.opsForHash().put(USER_CAREER_KEY + userId, "Position1", career.get(0));
         if (career.size() > 1 && career.get(1) != null){
             stringRedisTemplate.opsForHash().put(USER_CAREER_KEY + userId, "Position2", career.get(1));
@@ -116,8 +115,19 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        Boolean newData = dto.getNewData();
         Long userId = dto.getUserId();
         String jobToken = dto.getJobToken();
+        if (newData){
+            setCareer(userId, dto.getJobs());
+            setLoginToken(userId,dto.getJobToken());
+            String result = restTemplate.postForObject(
+                    "http://localhost:8000/api/skills/search",
+                    new HttpEntity<>(dto, headers),
+                    String.class
+            );
+            return Result.success(result);
+        }
         if (stringRedisTemplate.hasKey(userId + ":saveJobs") && !Objects.equals(stringRedisTemplate.opsForValue().get(userId + ":saveJobs"), jobToken)){
             if (stringRedisTemplate.hasKey(USER_CAREER_KEY + userId)){
                 List<String> jobs = new ArrayList<>();

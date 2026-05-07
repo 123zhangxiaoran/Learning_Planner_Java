@@ -186,17 +186,13 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
     @Override
     public Result<Object> getUserJobData(Long userId) {
         GetSkillsDTO jobs = new GetSkillsDTO();
-        if (jobs.getJobs() == null) {
-            jobs.setJobs(new ArrayList<>());
-        }
+        List<String> NewJobs = new ArrayList<>();
         UserCareerGoal goal = userCareerGoalMapper.selectById(userId);
-        String job1 = goal.getPosition1();
-        String job2 = goal.getPosition2();
-        String job3 = goal.getPosition3();
-        if (job1 == null) return Result.fail(FAIL);
-        jobs.getJobs().add(job1);
-        if (job2 != null) jobs.getJobs().add(job2);
-        if (job3 != null) jobs.getJobs().add(job3);
+        if (goal.getPosition1() == null) return Result.fail(FAIL);
+        NewJobs.add(goal.getPosition1());
+        if (goal.getPosition2() != null) NewJobs.add(goal.getPosition2());
+        if (goal.getPosition3() != null) NewJobs.add(goal.getPosition3());
+        jobs.setJobs(NewJobs);
 
         // 设置请求头为 JSON 格式
         HttpHeaders headers = new HttpHeaders();
@@ -207,6 +203,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
                 new HttpEntity<>(jobs, headers),
                 String.class
         );
+        setCareer(userId,NewJobs);
         return Result.success(result);
     }
 

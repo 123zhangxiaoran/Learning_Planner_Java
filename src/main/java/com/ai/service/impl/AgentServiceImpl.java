@@ -166,7 +166,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         return Result.success(result);
     }
 
-    //  根据用户信息匹配技能
+    //  根据用户信息及技能匹配学习资料
     @Override
     public Result<String> getSkill(AnalyticalSkillDTO dto) {
         // 设置请求头为 JSON 格式

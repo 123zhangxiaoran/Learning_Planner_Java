@@ -8,4 +8,5 @@ import java.util.List;
 public class AnalyticalSkillDTO {
     private String text;
     private List<String> job_names;
+    private String selected_skill;
 }

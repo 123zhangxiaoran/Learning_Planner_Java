@@ -18,7 +18,14 @@
 日志级别：开发环境Debug，生产环境Info，仅保留关键业务日志
 三、项目包结构
 
-com.ai.learning ├── config 配置类（Redis、跨域等） ├── controller 接口控制层 ├── entity 数据库实体类 ├── mapper 数据访问层 ├── service 业务层 ├── common 通用工具（统一返回值、全局异常） └── util 工具类
+com.ai.learning 
+├── config 配置类（Redis、跨域等） 
+├── controller 接口控制层 
+├── entity 数据库实体类 
+├── mapper 数据访问层 
+├── service 业务层 
+├── common 通用工具（统一返回值、全局异常） 
+└── util 工具类
 
 四、关键配置备注
 

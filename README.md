@@ -1,6 +1,6 @@
 一、项目基础信息
 
-项目名称：AI学路规划系统\n
+项目名称：AI学路规划系统
 英文项目名：learning-planner
 基础包路径：com.ai.learning
 主启动类：LearningPlannerApplication

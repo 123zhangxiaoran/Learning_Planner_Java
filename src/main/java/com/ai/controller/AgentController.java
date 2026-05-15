@@ -3,6 +3,7 @@ package com.ai.controller;
 import com.ai.common.Result;
 import com.ai.dto.AgentTextDTO;
 import com.ai.dto.AnalyticalSkillDTO;
+import com.ai.dto.FetchSkillKnowDTO;
 import com.ai.dto.GetSkillsDTO;
 import com.ai.service.AgentService;
 import jakarta.annotation.Resource;
@@ -48,5 +49,11 @@ public class AgentController {
     @GetMapping("/userJobData/{userId}")
     public Result<Object> getUserJobData(@PathVariable Long userId) {
         return agentService.getUserJobData(userId);
+    }
+
+    //  获取技能所对应的知识点
+    @PostMapping("/fetchSkillKnowledgePoints")
+    public Result<String> fetchSkill(@RequestBody FetchSkillKnowDTO dto){
+        return agentService.fectchSkill(dto);
     }
 }

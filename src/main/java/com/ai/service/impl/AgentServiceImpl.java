@@ -207,5 +207,21 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         return Result.success(result);
     }
 
+    @Override
+    public Result<String> fectchSkill(FetchSkillKnowDTO dto) {
+        // 设置请求头为 JSON 格式
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 包装成 HttpEntity
+        String result = restTemplate.postForObject(
+                "http://localhost:8000/api/skill/fetchSkill",
+                new HttpEntity<>(dto, headers),
+                String.class
+        );
+
+        return Result.success(result);
+    }
+
     //  保存用户选择的技能
 }

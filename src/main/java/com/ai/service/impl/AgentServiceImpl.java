@@ -3,10 +3,16 @@ package com.ai.service.impl;
 import com.ai.common.Result;
 import com.ai.dto.*;
 import com.ai.entity.UserCareerGoal;
+import com.ai.entity.UserLearningProgress;
 import com.ai.mapper.UserCareerGoalMapper;
+import com.ai.mapper.UserLearningProgressMapper;
 import com.ai.service.AgentService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpEntity;
@@ -17,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +40,8 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
     private UserCareerGoalMapper userCareerGoalMapper;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private UserLearningProgressMapper learningProgressMapper;
 
     /**
      * 将岗位名称写入内存
@@ -207,6 +216,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         return Result.success(result);
     }
 
+    //  返回知识点并且确认新用户
     @Override
     public Result<String> fectchSkill(FetchSkillKnowDTO dto) {
         // 设置请求头为 JSON 格式
@@ -219,9 +229,44 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
                 new HttpEntity<>(dto, headers),
                 String.class
         );
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            Map<String, Object> map = mapper.readValue(result, new TypeReference<>() {});
+            LambdaQueryWrapper<UserLearningProgress> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(UserLearningProgress::getUserId, dto.getUser_id())
+                    .eq(UserLearningProgress::getSkillName, dto.getSelected_skill());
 
-        return Result.success(result);
+            boolean exists = learningProgressMapper.exists(wrapper);
+            map.put("exists", exists);
+            String newResult = mapper.writeValueAsString(map);
+            return Result.success(newResult);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    //  保存用户选择的技能
+    //保存人物画像
+    @Override
+    public Result<String> learningPath(LearningPathDTO dto) {
+        // 设置请求头为 JSON 格式
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 包装成 HttpEntity
+        String result = restTemplate.postForObject(
+                "http://localhost:8000/api/skill/learningPath",
+                new HttpEntity<>(dto, headers),
+                String.class
+        );
+
+        List<String> dimensions = dto.getDimensions();
+        boolean save = learningProgressMapper.batchInsert(dto.getUser_id(),dto.getSkill_name(), dimensions);
+
+        if (save){
+            return Result.success(result);
+        }else {
+            return Result.success("数据保存失败");
+        }
+    }
+
 }

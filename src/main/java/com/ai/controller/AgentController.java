@@ -1,10 +1,7 @@
 package com.ai.controller;
 
 import com.ai.common.Result;
-import com.ai.dto.AgentTextDTO;
-import com.ai.dto.AnalyticalSkillDTO;
-import com.ai.dto.FetchSkillKnowDTO;
-import com.ai.dto.GetSkillsDTO;
+import com.ai.dto.*;
 import com.ai.service.AgentService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
@@ -55,5 +52,11 @@ public class AgentController {
     @PostMapping("/fetchSkillKnowledgePoints")
     public Result<String> fetchSkill(@RequestBody FetchSkillKnowDTO dto){
         return agentService.fectchSkill(dto);
+    }
+
+    //  保存用户画像
+    @PostMapping("/generateLearningPath")
+    public Result<String> learningPath(@RequestBody LearningPathDTO dto) {
+        return agentService.learningPath(dto);
     }
 }

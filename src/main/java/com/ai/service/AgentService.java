@@ -1,10 +1,7 @@
 package com.ai.service;
 
 import com.ai.common.Result;
-import com.ai.dto.AgentTextDTO;
-import com.ai.dto.AnalyticalSkillDTO;
-import com.ai.dto.FetchSkillKnowDTO;
-import com.ai.dto.GetSkillsDTO;
+import com.ai.dto.*;
 import com.ai.entity.UserCareerGoal;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -23,4 +20,6 @@ public interface AgentService extends IService<UserCareerGoal> {
     Result<Object> getUserJobData(Long userId);
     //  页面2找技能具体的知识点
     Result<String> fectchSkill(FetchSkillKnowDTO dto);
+    //  保存人物画像
+    Result<String> learningPath(LearningPathDTO dto);
 }

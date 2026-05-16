@@ -50,11 +50,10 @@ CREATE TABLE user_career_goal
 DROP TABLE IF EXISTS user_learning_progress;
 CREATE TABLE user_learning_progress
 (
-    user_id         BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '关联用户ID',
-    position_name   VARCHAR(64) NOT NULL COMMENT '岗位名称',
-    course_name     VARCHAR(128) NOT NULL COMMENT '课程/知识点名称',
-    progress        INT DEFAULT 0 COMMENT '课程完成度(0-100)',
-    UNIQUE KEY uk_user_position_course (user_id, position_name, course_name),
-    INDEX idx_user_position (user_id, position_name)
+    user_id         BIGINT NOT NULL COMMENT '用户ID',
+    skill_name      VARCHAR(128) NOT NULL COMMENT '技能名称',
+    knowledge_name  VARCHAR(128) NOT NULL COMMENT '知识点名称',
+    score           INT DEFAULT 0 COMMENT '评分（0-100）',
+    PRIMARY KEY (user_id, skill_name, knowledge_name)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户学习进度详情表';

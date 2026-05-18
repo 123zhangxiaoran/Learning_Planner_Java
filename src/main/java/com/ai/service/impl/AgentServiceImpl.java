@@ -21,10 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.ai.common.ResponseCode.FAIL;
@@ -258,9 +255,11 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
                 new HttpEntity<>(dto, headers),
                 String.class
         );
-
-        List<String> dimensions = dto.getDimensions();
-        boolean save = learningProgressMapper.batchInsert(dto.getUser_id(),dto.getSkill_name(), dimensions);
+        List<List<String>> dimensions = dto.getDimensions();
+        List<String> firstKnowledgeNames = dimensions.stream()
+                .map(row -> row.isEmpty() ? "" : row.get(0))
+                .toList();
+        boolean save = learningProgressMapper.batchInsert(dto.getUser_id(),dto.getSkill_name(),firstKnowledgeNames,dto.getJob_name());
 
         if (save){
             return Result.success(result);

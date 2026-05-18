@@ -1,15 +1,15 @@
 package com.ai.controller;
 
-import com.ai.dto.PhoneCodeLoginDTO;
-import com.ai.dto.PhoneLoginDTO;
-import com.ai.dto.UserDTO;
-import com.ai.dto.RegisterDTO;
+import com.ai.dto.*;
+import com.ai.entity.UserLearningProgress;
 import com.ai.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import com.ai.common.Result;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -73,5 +73,21 @@ public class UserController {
             @CookieValue(value = "refreshToken", required = false) String refreshToken
     ){
         return userService.logout(response, refreshToken);
+    }
+
+    /*
+    获取评分
+     */
+    @PostMapping("/reportPageData")
+    public Result<ReportPageDataResponseDTO> reportData(@RequestBody ReportPageDataRequestDTO dto) {
+        return userService.reportData(dto);
+    }
+
+    /*
+    获取技能/技能知识点
+     */
+    @GetMapping("/userSelectedSkills/{userId}")
+    public Result<List<UserLearningProgress>> userSelectedSkills(@PathVariable Long userId) {
+        return userService.userSelectedSkills(userId);
     }
 }

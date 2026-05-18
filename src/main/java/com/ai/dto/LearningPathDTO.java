@@ -8,7 +8,7 @@ import java.util.List;
 public class LearningPathDTO {
     private String skill_name;
     private String job_name;
-    private List<String> dimensions;
+    private List<List<String>> dimensions;
     private Long user_id;
     private String userinput;
 }

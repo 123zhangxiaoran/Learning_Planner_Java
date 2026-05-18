@@ -23,20 +23,11 @@ public class UserCareerGoal implements Serializable {
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String position1;
 
-    /// 用户岗位1完成度
-    private Integer progress1;
-
     /// 用户岗位名称2
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String position2;
 
-    /// 用户岗位2完成度
-    private Integer progress2;
-
-    /// 用户岗位名称1
+    /// 用户岗位名称3
     @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String position3;
-
-    /// 用户岗位1完成度
-    private Integer progress3;
 }

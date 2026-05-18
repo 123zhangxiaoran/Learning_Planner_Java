@@ -22,7 +22,7 @@ CREATE TABLE user
 (
     user_id     BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID',
     phone      VARCHAR(20) UNIQUE COMMENT '手机号',
-    password    VARCHAR(128) NOT NULL COMMENT '密码',
+    password    VARCHAR(128) COMMENT '密码',
     nickname    VARCHAR(32) NOT NULL COMMENT '昵称',
     salt       VARCHAR(64) COMMENT '盐值',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -38,9 +38,6 @@ CREATE TABLE user_career_goal
     position1      VARCHAR(64) COMMENT '岗位名称1',
     position2      VARCHAR(64) COMMENT '岗位名称2',
     position3      VARCHAR(64) COMMENT '岗位名称3',
-    progress1      INT DEFAULT 0 COMMENT '岗位1完成度(0-100)',
-    progress2      INT DEFAULT 0 COMMENT '岗位2完成度(0-100)',
-    progress3      INT DEFAULT 0 COMMENT '岗位3完成度(0-100)',
     UNIQUE KEY uk_user_id (user_id),
     INDEX idx_user_id (user_id)
 ) ENGINE = InnoDB
@@ -51,8 +48,9 @@ DROP TABLE IF EXISTS user_learning_progress;
 CREATE TABLE user_learning_progress
 (
     user_id         BIGINT NOT NULL COMMENT '用户ID',
-    skill_name      VARCHAR(128) NOT NULL COMMENT '技能名称',
-    knowledge_name  VARCHAR(128) NOT NULL COMMENT '知识点名称',
+    skill_name      VARCHAR(50) NOT NULL COMMENT '技能名称',
+    knowledge_name  VARCHAR(50) NOT NULL COMMENT '知识点名称',
+    job_name        VARCHAR(20) NOT NULL COMMENT '岗位名称',
     score           INT DEFAULT 0 COMMENT '评分（0-100）',
     PRIMARY KEY (user_id, skill_name, knowledge_name)
 ) ENGINE = InnoDB

@@ -1,11 +1,14 @@
 package com.ai.service.impl;
 
 import com.ai.common.Result;
-import com.ai.dto.UserDTO;
+import com.ai.dto.*;
 import com.ai.entity.User;
+import com.ai.entity.UserLearningProgress;
+import com.ai.mapper.UserLearningProgressMapper;
 import com.ai.mapper.UserMapper;
 import com.ai.service.UserService;
 import com.ai.util.*;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -14,10 +17,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.ai.common.JwtConstant.REFRESH_TOKEN_MAX_AGE;
@@ -32,6 +36,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private final StringRedisTemplate stringRedisTemplate;
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
+    private final UserLearningProgressMapper userLearningProgressMapper;
 
     /**
      * 生成刷新令牌并设置Cookie，清理相关缓存
@@ -118,6 +123,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private boolean validateCode(String phone, String code) {
         String cachedCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
         return !Objects.equals(cachedCode, code);
+    }
+
+    @NonNull
+    private static ReportPageDataResponseDTO getReportPageDataResponseDTO(List<UserLearningProgress> entities, List<ScoreKeyDTO> keys) {
+        Map<String, Integer> scoreMap = new HashMap<>();
+        for (UserLearningProgress e : entities) {
+            scoreMap.put(e.getSkillName() + "::" + e.getKnowledgeName(), e.getScore());
+        }
+
+        // 按 keys 原始顺序组装响应
+        List<ScoreItemDTO> scores = new ArrayList<>();
+        for (ScoreKeyDTO key : keys) {
+            ScoreItemDTO si = new ScoreItemDTO();
+            si.setOrder(key.getOrder());
+            si.setScore(scoreMap.getOrDefault(key.getSkillName() + "::" + key.getKnowledgeName(), 0));
+            scores.add(si);
+        }
+
+        ReportPageDataResponseDTO resp = new ReportPageDataResponseDTO();
+        resp.setScores(scores);
+        return resp;
     }
 
     //  发送验证码
@@ -301,6 +327,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
 
         return Result.success();
+    }
+
+    @Override
+    public Result<ReportPageDataResponseDTO> reportData(ReportPageDataRequestDTO dto) {
+        Integer userId = dto.getUserid();
+
+        // 收集所有查询 key（带 order）
+        List<ScoreKeyDTO> keys = new ArrayList<>();
+        for (SkillReportDTO skill : dto.getSkills()) {
+            for (KnowledgeItemDTO item : skill.getItems()) {
+                ScoreKeyDTO key = new ScoreKeyDTO();
+                key.setUserid(userId);
+                key.setSkillName(skill.getSkill_name());
+                key.setKnowledgeName(item.getKnowledge_name());
+                key.setOrder(item.getOrder());
+                keys.add(key);
+            }
+        }
+
+        List<UserLearningProgress> entities = userLearningProgressMapper.selectBatchByKeys(keys);
+
+        // 构建 score 映射
+        ReportPageDataResponseDTO resp = getReportPageDataResponseDTO(entities, keys);
+        return Result.success(resp);
+    }
+
+    //  获取用户保持的技能数据
+    @Override
+    public Result<List<UserLearningProgress>> userSelectedSkills(Long userId) {
+        List<UserLearningProgress> entities = userLearningProgressMapper.selectList(
+                new LambdaQueryWrapper<UserLearningProgress>()
+                        .eq(UserLearningProgress::getUserId, userId)
+        );
+        return Result.success(entities);
     }
 
 }

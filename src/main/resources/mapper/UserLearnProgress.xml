@@ -3,10 +3,19 @@
 <mapper namespace="com.ai.mapper.UserLearningProgressMapper">
     <!-- 这里写自定义SQL，没有的话留空也可以 -->
     <insert id="batchInsert">
-        INSERT INTO user_learning_progress (user_id, skill_Name, knowledge_Name, score)
+        INSERT INTO user_learning_progress (user_id, skill_Name, knowledge_Name, job_Name, score)
         VALUES
-        <foreach collection="knowledgeNames" item="name" separator=",">
-            (#{userId}, #{skillName}, #{name}, 0)
+        <foreach collection="knowledgeNames" item="knowledge" separator=",">
+            (#{userId}, #{skillName}, #{knowledge}, #{jobName}, 0)
         </foreach>
     </insert>
+
+    <select id="selectBatchByKeys" resultType="com.ai.entity.UserLearningProgress">
+        SELECT * FROM user_learning_progress WHERE
+        <foreach collection="list" item="key" separator=" OR ">
+            (user_id = #{key.userid}
+            AND skill_name = #{key.skillName}
+            AND knowledge_name = #{key.knowledgeName})
+        </foreach>
+    </select>
 </mapper>

@@ -22,4 +22,6 @@ public interface AgentService extends IService<UserCareerGoal> {
     Result<String> fectchSkill(FetchSkillKnowDTO dto);
     //  保存人物画像
     Result<String> learningPath(LearningPathDTO dto);
+    //  生成个人专属题目
+    Result<String> generateQuestions(AnalyticalSkillDTO dto);
 }

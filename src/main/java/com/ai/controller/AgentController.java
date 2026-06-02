@@ -59,4 +59,10 @@ public class AgentController {
     public Result<String> learningPath(@RequestBody LearningPathDTO dto) {
         return agentService.learningPath(dto);
     }
+
+    //  生成个人专属题目
+    @PostMapping("/generateQuestions")
+    public Result<String> generateQuestions(@RequestBody AnalyticalSkillDTO dto) {
+        return agentService.generateQuestions(dto);
+    }
 }

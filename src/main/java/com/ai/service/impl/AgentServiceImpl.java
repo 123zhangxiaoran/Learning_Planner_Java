@@ -268,4 +268,21 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         }
     }
 
+    @Override
+    public Result<String> generateQuestions(AnalyticalSkillDTO dto) {
+        // 设置请求头为 JSON 格式
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 包装成 HttpEntity
+        String result = restTemplate.postForObject(
+                "http://localhost:8000/api/skill/generateQuestions",
+                new HttpEntity<>(dto, headers),
+                String.class
+        );
+
+        
+        return Result.success(result);
+    }
+
 }

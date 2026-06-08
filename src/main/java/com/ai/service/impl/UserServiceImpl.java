@@ -362,5 +362,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         );
         return Result.success(entities);
     }
+    //  获取用户已有的技能数据
+    @Override
+    public Result<FetchSkillKnowDTO> userSkills(Long userId) {
+        
+        return null;
+    }
 
 }

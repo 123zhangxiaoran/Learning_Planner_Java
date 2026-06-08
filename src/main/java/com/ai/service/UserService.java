@@ -1,6 +1,7 @@
 package com.ai.service;
 
 import com.ai.common.Result;
+import com.ai.dto.FetchSkillKnowDTO;
 import com.ai.dto.ReportPageDataRequestDTO;
 import com.ai.dto.ReportPageDataResponseDTO;
 import com.ai.dto.UserDTO;
@@ -29,4 +30,6 @@ public interface UserService extends IService<User> {
     Result<ReportPageDataResponseDTO> reportData(ReportPageDataRequestDTO dto);
     //获取用户选择的技能数据
     Result<List<UserLearningProgress>> userSelectedSkills(Long userId);
+    //获取用户已有的技能数据
+    Result<FetchSkillKnowDTO> userSkills(Long userId);
 }

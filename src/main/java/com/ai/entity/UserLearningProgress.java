@@ -21,12 +21,10 @@ public class UserLearningProgress implements Serializable {
     ///  联合主键
     @TableId(type = IdType.AUTO)
     private Long userId;
+    private String jobName;
     private String skillName;
     private String knowledgeName;
 
     ///  知识点评分
     private Integer score;
-
-    ///  岗位名称
-    private String jobName;
 }

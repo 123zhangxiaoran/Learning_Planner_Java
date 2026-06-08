@@ -1,7 +1,9 @@
 package com.ai.service.impl;
 
 import com.ai.common.Result;
+import com.ai.config.async.QuestionAsyncService;
 import com.ai.dto.*;
+import com.ai.entity.Questions;
 import com.ai.entity.UserCareerGoal;
 import com.ai.entity.UserLearningProgress;
 import com.ai.mapper.UserCareerGoalMapper;
@@ -12,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -39,6 +42,11 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private UserLearningProgressMapper learningProgressMapper;
+    @Resource
+    private ObjectMapper objectMapper;
+    @Resource
+    private QuestionAsyncService asyncService;
+
 
     /**
      * 将岗位名称写入内存
@@ -76,6 +84,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
                 "http://localhost:8000/api/jobs/search",
                 new HttpEntity<>(dto, headers),
                 String.class
+
         );
         return Result.success(result);
     }
@@ -194,6 +203,9 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         GetSkillsDTO jobs = new GetSkillsDTO();
         List<String> NewJobs = new ArrayList<>();
         UserCareerGoal goal = userCareerGoalMapper.selectById(userId);
+        if (goal == null) {
+            return Result.fail(FAIL);
+        }
         if (goal.getPosition1() == null) return Result.fail(FAIL);
         NewJobs.add(goal.getPosition1());
         if (goal.getPosition2() != null) NewJobs.add(goal.getPosition2());
@@ -280,8 +292,49 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
                 new HttpEntity<>(dto, headers),
                 String.class
         );
-
-        
+        // 存入数据库
+        try{
+            JsonNode root = objectMapper.readTree(result);
+            JsonNode dataArray = root.path("data");
+            List<Questions> questions = new ArrayList<>();
+            String uuid = UUID.randomUUID().toString().replace("-", "");
+            for (JsonNode item : dataArray) {
+                Questions entity = new Questions();
+                // 生成 UUID 作为主键
+                entity.setId(UUID.randomUUID().toString().replace("-", ""));
+                // 生成 UUID 作为题集id
+                entity.setQuestionId(uuid);
+                // questionText题目
+                entity.setQuestionText(item.path("stem").asText());
+                // options（JSON 数组）选项
+                JsonNode optionsNode = item.path("options");
+                if (optionsNode != null && optionsNode.isArray()){
+                    List<String> optionList = objectMapper.convertValue(optionsNode, new TypeReference<>() {});
+                    entity.setOptions(optionList);
+                }else entity.setOptions(null);
+                // correctAnswer答案
+                entity.setCorrectAnswer(item.path("answer").asText());
+                // explanation解析
+                entity.setExplanation(item.path("explanation").asText());
+                // questionsType题型
+                String remoteType = item.path("type").asText();
+                entity.setQuestionType(remoteType);
+                // 难度
+                Integer difficulty = item.path("difficulty").asInt();
+                entity.setDifficultyScore(difficulty);
+                // 从 dto 中获取关联字段
+                entity.setSkillName(dto.getSkill_name());
+                String dimension = item.path("dimension").asText();
+                entity.setKnowledgeName(dimension);
+                entity.setJobName(dto.getJob_name());
+                questions.add(entity);
+            }
+            // 异步保存，不等待结果
+            asyncService.saveQuestionsBatch(questions, dto.getUser_id());
+        }catch (JsonProcessingException e){
+            // 也可以抛出自定义运行时异常
+            throw new RuntimeException("JSON 解析失败", e);
+        }
         return Result.success(result);
     }
 

@@ -90,4 +90,12 @@ public class UserController {
     public Result<List<UserLearningProgress>> userSelectedSkills(@PathVariable Long userId) {
         return userService.userSelectedSkills(userId);
     }
+
+    /*
+    获取具体技能知识点
+     */
+    @GetMapping("/userKnowledgeData/{userId}")
+    public Result<FetchSkillKnowDTO> userSkills(@PathVariable Long userId) {
+        return userService.userSkills(userId);
+    }
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ai.mapper.QuestionsMapper">
+    <!-- 这里写自定义SQL，没有的话留空也可以 -->
+    <insert id="batchInsert" parameterType="list" useGeneratedKeys="false">
+        INSERT INTO questions (
+        id, question_text, options, correct_answer, explanation,
+        question_type, difficulty_score, skill_name, knowledge_name, job_name, question_id
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id}, #{item.questionText}, #{item.options, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler},
+            #{item.correctAnswer}, #{item.explanation}, #{item.questionType},
+            #{item.difficultyScore}, #{item.skillName}, #{item.knowledgeName}, #{item.jobName}, #{item.questionId}
+            )
+        </foreach>
+    </insert>
+</mapper>

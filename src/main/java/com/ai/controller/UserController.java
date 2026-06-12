@@ -1,5 +1,6 @@
 package com.ai.controller;
 
+import com.ai.common.ResponseCode;
 import com.ai.dto.*;
 import com.ai.entity.UserLearningProgress;
 import com.ai.service.UserService;
@@ -97,5 +98,29 @@ public class UserController {
     @GetMapping("/userKnowledgeData/{userId}")
     public Result<FetchSkillKnowDTO> userSkills(@PathVariable Long userId) {
         return userService.userSkills(userId);
+    }
+
+    /*
+    获取用户的题目数据
+     */
+    @GetMapping("/userQuestions/{userId}")
+    public Result<List<QuestionWithAnswerStatusDTO>> getQuestions(@PathVariable Long userId) {
+        return userService.getQuestions(userId);
+    }
+
+    /*
+    删除对应的技能
+     */
+    @PostMapping("/deleteSkill")
+    public Result<ResponseCode> deleteSkill(@RequestBody DeleteSkillDTO dto) {
+        return userService.deleteSkill(dto);
+    }
+
+    /*
+    更新对应题目答对状态和评分
+     */
+    @PostMapping("/submitQuestionAnswer")
+    public Result<ResponseCode> submitQuestionAnswer(@RequestBody SubmitQuestionAnswerDTO dto) {
+        return userService.submitQuestionAnswer(dto);
     }
 }

@@ -335,7 +335,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
             // 也可以抛出自定义运行时异常
             throw new RuntimeException("JSON 解析失败", e);
         }
-        return Result.success(result);
+        return Result.success("生成成功");
     }
 
 }

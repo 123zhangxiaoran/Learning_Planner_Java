@@ -11,14 +11,10 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("user_career_goal")
+@TableName("user_answers")
 public class UserAnswers implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-    /// 主键
-    @TableId(value = "id",type = IdType.AUTO)
-    private Long Id;
-
     /// 用户id
     private Long userId;
 

@@ -37,7 +37,7 @@ public class QuestionAsyncService {
                 UserAnswers ua = new UserAnswers();
                 ua.setUserId(userId);
                 ua.setQuestionId(q.getId());
-                ua.setIsCorrect(null);
+                ua.setIsCorrect(0);
                 userAnswers.add(ua);
             }
             userAnswersMapper.batchInsert(userAnswers);

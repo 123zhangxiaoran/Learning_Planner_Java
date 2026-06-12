@@ -15,4 +15,40 @@
             )
         </foreach>
     </insert>
+
+    <resultMap id="QuestionAnswerDtoMap" type="com.ai.dto.QuestionWithAnswerStatusDTO">
+        <result column="id" property="Id" jdbcType="VARCHAR"/>
+        <result column="question_id" property="questionId" jdbcType="VARCHAR"/>
+        <result column="question_text" property="questionText" jdbcType="VARCHAR"/>
+        <result column="options" property="options" jdbcType="VARCHAR"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="correct_answer" property="correctAnswer" jdbcType="VARCHAR"/>
+        <result column="explanation" property="explanation" jdbcType="VARCHAR"/>
+        <result column="question_type" property="questionType" jdbcType="VARCHAR"/>
+        <result column="skill_name" property="skillName" jdbcType="VARCHAR"/>
+        <result column="knowledge_name" property="knowledgeName" jdbcType="VARCHAR"/>
+        <result column="job_name" property="jobName" jdbcType="VARCHAR"/>
+        <result column="is_correct" property="isCorrect" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <!-- 查询所有题目及指定用户的答题状态（包含未答题目） -->
+    <select id="selectAllQuestionsWithUserAnswerStatus" resultMap="QuestionAnswerDtoMap">
+        SELECT
+            q.id,
+            q.question_text,
+            q.options,
+            q.correct_answer,
+            q.explanation,
+            q.question_type,
+            q.skill_name,
+            q.knowledge_name,
+            q.job_name,
+            ua.is_correct,
+            q.question_id
+        FROM questions q
+                 LEFT JOIN user_answers ua
+                        ON q.id = ua.question_id
+                 where ua.user_id = #{userId}
+        ORDER BY q.id
+    </select>
 </mapper>

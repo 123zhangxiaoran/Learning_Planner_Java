@@ -16,4 +16,10 @@
             )
         </foreach>
     </insert>
+
+    <update id="updateUserCorrect">
+        UPDATE user_answers
+        SET is_correct = #{is_correct}
+        WHERE user_id = #{user_id} AND question_id = #{question_id}
+    </update>
 </mapper>

@@ -1,9 +1,13 @@
 package com.ai.service.impl;
 
+import com.ai.common.ResponseCode;
 import com.ai.common.Result;
 import com.ai.dto.*;
 import com.ai.entity.User;
+import com.ai.entity.UserAnswers;
 import com.ai.entity.UserLearningProgress;
+import com.ai.mapper.QuestionsMapper;
+import com.ai.mapper.UserAnswersMapper;
 import com.ai.mapper.UserLearningProgressMapper;
 import com.ai.mapper.UserMapper;
 import com.ai.service.UserService;
@@ -37,6 +41,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
     private final UserLearningProgressMapper userLearningProgressMapper;
+    private final QuestionsMapper questionsMapper;
+    private final UserAnswersMapper userAnswersMapper;
 
     /**
      * 生成刷新令牌并设置Cookie，清理相关缓存
@@ -362,11 +368,83 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         );
         return Result.success(entities);
     }
+
     //  获取用户已有的技能数据
     @Override
     public Result<FetchSkillKnowDTO> userSkills(Long userId) {
         
         return null;
+    }
+
+    //  获取用户已经生成题目的数据
+    @Override
+    public Result<List<QuestionWithAnswerStatusDTO>> getQuestions(Long userId) {
+        List<QuestionWithAnswerStatusDTO> question = questionsMapper.selectAllQuestionsWithUserAnswerStatus(userId);
+        return Result.success(question);
+    }
+
+    //  删除用户的选择的技能
+    @Override
+    public Result<ResponseCode> deleteSkill(DeleteSkillDTO dto) {
+        try{
+            userLearningProgressMapper.deleteByIdAndName(Math.toIntExact(dto.getUser_id()),dto.getSkill_name(),dto.getJob_name());
+            return Result.success(SUCCESS);
+        }catch (Exception e){
+            System.out.println("数据删除异常" + e);
+            return Result.success(FAIL);
+        }
+    }
+
+    //  更新用户评分和题目的状态
+    @Override
+    public Result<ResponseCode> submitQuestionAnswer(SubmitQuestionAnswerDTO dto) {
+        System.out.println(dto);
+        try{
+            //原本的分数
+            QueryWrapper<UserLearningProgress> wrapper = new QueryWrapper<>();
+            wrapper.select("score")
+                    .eq("user_id", dto.getUser_id())
+                    .eq("job_name", dto.getJob_name())
+                    .eq("skill_name", dto.getSkill_name())
+                    .eq("knowledge_name", dto.getKnowledge_name());
+            UserLearningProgress user = userLearningProgressMapper.selectOne(wrapper);
+            int score = user.getScore();
+
+            //原本的题目状态
+            QueryWrapper<UserAnswers> wrapper2 = new QueryWrapper<>();
+            wrapper2.select("is_correct")
+                    .eq("user_id", dto.getUser_id())
+                    .eq("question_id", dto.getQuestion_id());
+            UserAnswers questions = userAnswersMapper.selectOne(wrapper2);
+            int correct = questions.getIsCorrect();
+
+            //获取的分数
+            int getscore = 0;
+            if (correct == 0){
+                userAnswersMapper.updateUserCorrect(dto.getUser_id(),dto.getQuestion_id(),dto.getIs_correct());
+                if (dto.getIs_correct() == 1){
+                    if (dto.getQuestion_type().equals("judge")){
+                        getscore = 1;
+                    } else if (dto.getQuestion_type().equals("choice")) {
+                        getscore = 2;
+                    }
+                }else {
+                    return Result.success(SUCCESS);
+                }
+            } else if (correct == 1) {
+                return Result.success(SUCCESS);
+            }else {
+                return Result.success(FAIL);
+            }
+
+            //更新本知识点的评分
+            userLearningProgressMapper.updateUserScore(dto.getUser_id(),dto.getJob_name(),dto.getSkill_name(),dto.getKnowledge_name(),score + getscore);
+
+            return Result.success(SUCCESS);
+        }catch (Exception e){
+            System.out.println("用户评分/题目状态错误" + e);
+            return Result.success(FAIL);
+        }
     }
 
 }

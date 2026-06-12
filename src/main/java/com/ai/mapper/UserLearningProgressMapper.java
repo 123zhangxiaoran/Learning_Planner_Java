@@ -16,4 +16,12 @@ public interface UserLearningProgressMapper extends BaseMapper<UserLearningProgr
                     @Param("jobName") String jobName);
 
     List<UserLearningProgress> selectBatchByKeys(@Param("list") List<ScoreKeyDTO> keys);
+
+    void deleteByIdAndName(@Param("user_id") Integer user_id, @Param("skill_name") String skill_name, @Param("job_name") String job_name);
+
+    void updateUserScore(@Param("user_id") Long user_id,
+                           @Param("job_name") String job_name,
+                           @Param("skill_name") String skill_name,
+                         @Param("knowledge_name") String knowledge_name,
+                         @Param("score") int score);
 }

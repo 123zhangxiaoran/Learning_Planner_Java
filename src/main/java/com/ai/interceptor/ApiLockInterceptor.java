@@ -7,13 +7,23 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.util.PathMatcher;           // 🆕 新增导入
+import org.springframework.util.AntPathMatcher;      // 🆕 新增导入
 
 import java.util.concurrent.TimeUnit;
+import java.util.List;                               // 🆕 新增导入
+import java.util.Arrays;                            // 🆕 新增导入
 
 @Component
 public class ApiLockInterceptor implements HandlerInterceptor {
 
     private final RedisLockUtil redisLockUtil;
+    private final PathMatcher pathMatcher = new AntPathMatcher();
+
+    private static final List<String> WHITELIST_PATTERNS = Arrays.asList(
+            "/api/user/submitQuestionAnswer",
+            ""
+    );
 
     // 构造器注入
     public ApiLockInterceptor(RedisLockUtil redisLockUtil) {
@@ -24,6 +34,11 @@ public class ApiLockInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              @NonNull HttpServletResponse response,
                              @NonNull Object handler) throws Exception {
+
+        String requestUri = request.getRequestURI();
+        if (isWhitelisted(requestUri)) {
+            return true;
+        }
 
         // 从 TokenInterceptor 获取注入的 userId
         String userId = (String) request.getAttribute("userId");
@@ -50,11 +65,16 @@ public class ApiLockInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // 白名单匹配辅助方法
+    private boolean isWhitelisted(String requestUri) {
+        return WHITELIST_PATTERNS.stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, requestUri));
+    }
+
     @Override
     public void afterCompletion(HttpServletRequest request,
                                 @NonNull HttpServletResponse response,
                                 @NonNull Object handler, Exception ex) {
-        // 不管业务是否抛异常，都执行解锁
         String lockKey = (String) request.getAttribute("lockKey");
         String lockValue = (String) request.getAttribute("lockValue");
         if (lockKey != null && lockValue != null) {

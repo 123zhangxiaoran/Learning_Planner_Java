@@ -398,7 +398,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     //  更新用户评分和题目的状态
     @Override
     public Result<ResponseCode> submitQuestionAnswer(SubmitQuestionAnswerDTO dto) {
-        System.out.println(dto);
         try{
             //原本的分数
             QueryWrapper<UserLearningProgress> wrapper = new QueryWrapper<>();

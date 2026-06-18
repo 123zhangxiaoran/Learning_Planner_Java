@@ -8,15 +8,15 @@ spring:
   # 数据源（比赛服务器MySQL，按实际情况修改）
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/learning_planner?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3636/learning_planner?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root  # 比赛服务器MySQL用户名
     password: 123456  # 比赛服务器MySQL密码
   # Redis（比赛服务器）
   data:
     redis:
-      host: 192.168.190.128
-      port: 6379
-      password: ""
+      host: localhost
+      port: 6363
+      password: 123456
       database: 0
   # Jackson 序列化（忽略null字段）
   jackson:

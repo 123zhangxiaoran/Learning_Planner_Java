@@ -11,4 +11,5 @@ public class AnalyticalSkillDTO {
     private String userinput;
     private Long user_id;
     private List<List<String>> dimensions;
-}
+    private List<List<String>> difficulty;
+ }

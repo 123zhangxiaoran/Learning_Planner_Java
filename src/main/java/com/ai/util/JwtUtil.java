@@ -57,6 +57,10 @@ public class JwtUtil {
 
     //  解析token
     public Claims parseToken(String token, boolean isRefreshToken) {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("JWT Token 不能为 null 或空字符串");
+        }
+        
         SecretKey key = isRefreshToken
                 ? Keys.hmacShaKeyFor(refreshSecret.getBytes())
                 : Keys.hmacShaKeyFor(accessSecret.getBytes());

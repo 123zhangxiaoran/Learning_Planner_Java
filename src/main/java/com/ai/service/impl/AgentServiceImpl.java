@@ -34,6 +34,7 @@ import static com.ai.util.RedisUtil.*;
 public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCareerGoal>
         implements AgentService {
 
+    public static final String URL = "http://localhost:8840";
     @Resource
     private RestTemplate restTemplate;
     @Resource
@@ -81,7 +82,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         String result = restTemplate.postForObject(
-                "http://localhost:8000/api/jobs/search",
+                URL + "/api/jobs/search",
                 new HttpEntity<>(dto, headers),
                 String.class
 
@@ -137,7 +138,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
             setCareer(userId, dto.getJobs());
             setLoginToken(userId,dto.getJobToken());
             String result = restTemplate.postForObject(
-                    "http://localhost:8000/api/skills/search",
+                    URL + "/api/skills/search",
                     new HttpEntity<>(dto, headers),
                     String.class
             );
@@ -174,7 +175,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
             dto.setJobToken(stringRedisTemplate.opsForValue().get(userId + ":saveJobs"));
         }
         String result = restTemplate.postForObject(
-                "http://localhost:8000/api/skills/search",
+                URL + "/api/skills/search",
                 new HttpEntity<>(dto, headers),
                 String.class
         );
@@ -190,7 +191,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
 
         // 包装成 HttpEntity
         String result = restTemplate.postForObject(
-                "http://localhost:8000/api/skill/analytical",
+                URL + "/api/skill/analytical",
                 new HttpEntity<>(dto, headers),
                 String.class
         );
@@ -217,7 +218,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         String result = restTemplate.postForObject(
-                "http://localhost:8000/api/skills/search",
+                URL + "/api/skills/search",
                 new HttpEntity<>(jobs, headers),
                 String.class
         );
@@ -234,7 +235,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
 
         // 包装成 HttpEntity
         String result = restTemplate.postForObject(
-                "http://localhost:8000/api/skill/fetchSkill",
+                URL + "/api/skill/fetchSkill",
                 new HttpEntity<>(dto, headers),
                 String.class
         );
@@ -263,7 +264,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
 
         // 包装成 HttpEntity
         String result = restTemplate.postForObject(
-                "http://localhost:8000/api/skill/learningPath",
+                URL + "/api/skill/learningPath",
                 new HttpEntity<>(dto, headers),
                 String.class
         );
@@ -280,15 +281,19 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
         }
     }
 
+    // 生成个人专属题目
     @Override
     public Result<String> generateQuestions(AnalyticalSkillDTO dto) {
+        // 查找个人知识点对应是评分
+        
+
         // 设置请求头为 JSON 格式
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         // 包装成 HttpEntity
         String result = restTemplate.postForObject(
-                "http://localhost:8000/api/skill/generateQuestions",
+                URL + "/api/skill/generateQuestions",
                 new HttpEntity<>(dto, headers),
                 String.class
         );

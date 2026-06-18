@@ -38,6 +38,7 @@ public class TokenServiceImpl extends ServiceImpl<UserMapper, User>
             return Result.fail(UNAUTHORIZED);
         } catch (Exception e) {
             // 其他解析异常（签名错误、格式错误等）
+            System.out.println("错误原因:"+e);
             return Result.fail(PARAM_ERROR);
         }
     }

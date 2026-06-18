@@ -31,7 +31,7 @@ CREATE TABLE user_career_goal
 /*==================== 题目表 ====================*/
 DROP TABLE IF EXISTS questions;
 CREATE TABLE questions (
-    id VARCHAR(32) PRIMARY KEY COMMENT '题目ID（UUID）',
+    id VARCHAR(32) PRIMARY KEY COMMENT '题目ID',
     question_text TEXT NOT NULL COMMENT '题干',
     options JSON COMMENT '选项（JSON格式）',
     correct_answer VARCHAR(255) NOT NULL COMMENT '正确答案',
@@ -41,6 +41,7 @@ CREATE TABLE questions (
     skill_name VARCHAR(50) NOT NULL COMMENT '关联的技能名称（与user_learning_progress.skill_name对应）',
     knowledge_name VARCHAR(50) NOT NULL COMMENT '关联的知识点名称（与user_learning_progress.knowledge_name对应）',
     job_name VARCHAR(20) NOT NULL COMMENT '关联的岗位名称（与user_learning_progress.job_name对应）',
+    question_id VARCHAR(32) NOT NULL COMMENT '题集id',
     INDEX idx_skill_knowledge (skill_name, knowledge_name, job_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='题目表';
 

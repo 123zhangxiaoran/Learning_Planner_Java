@@ -3,12 +3,13 @@
  */
 package com.ai.config;
 
-import com.ai.interceptor.TokenInterceptor;
-import com.ai.interceptor.ApiLockInterceptor; // 你后续新建的锁拦截器
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.CorsRegistry; // 你后续新建的锁拦截器
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import com.ai.interceptor.ApiLockInterceptor;
+import com.ai.interceptor.TokenInterceptor;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
@@ -25,7 +26,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173","http://192.168.101.28:5173/")
+                .allowedOrigins("http://localhost:5173","http://localhost:3000","http://192.168.101.28:3000/")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
@@ -39,10 +40,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .order(1)
                 .addPathPatterns("/**")
                 .excludePathPatterns(
-                        "/api/user/code",
-                        "/api/user/phoneLogin",
-                        "/api/user/accountLogin",
-                        "/api/user/sendRegisterCode"
+                        "/user/code",
+                        "/user/phoneLogin",
+                        "/user/accountLogin",
+                        "/user/sendRegisterCode"
                 );
 
         // 2. 锁拦截器

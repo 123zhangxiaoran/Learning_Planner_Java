@@ -38,6 +38,7 @@ public class QuestionAsyncService {
                 ua.setUserId(userId);
                 ua.setQuestionId(q.getId());
                 ua.setIsCorrect(0);
+                ua.setIsCollect(0);
                 userAnswers.add(ua);
             }
             userAnswersMapper.batchInsert(userAnswers);

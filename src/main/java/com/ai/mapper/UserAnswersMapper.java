@@ -14,5 +14,6 @@ public interface UserAnswersMapper extends BaseMapper<UserAnswers> {
 
     void updateUserCorrect(@Param("user_id") Long user_id,
                                 @Param("question_id") String question_id,
-                                @Param("is_correct") int is_correct);
+                                @Param("is_correct") int is_correct,
+                                @Param("is_collect") int is_collect);
 }

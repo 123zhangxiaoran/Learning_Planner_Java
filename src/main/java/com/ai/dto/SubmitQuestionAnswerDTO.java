@@ -11,4 +11,8 @@ public class SubmitQuestionAnswerDTO {
     private String job_name;
     private String skill_name;
     private String knowledge_name;
+    private int is_collect;
+    private String userInput;
+    private String questionText;
+    private String correctAnswer;
 }

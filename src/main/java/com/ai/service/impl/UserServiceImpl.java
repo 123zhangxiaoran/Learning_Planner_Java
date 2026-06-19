@@ -16,17 +16,24 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.ai.common.JwtConstant.REFRESH_TOKEN_MAX_AGE;
 import static com.ai.common.ResponseCode.*;
@@ -36,13 +43,14 @@ import static com.ai.util.RedisUtil.*;
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
-
+    public static final String URL = "http://localhost:8840";
     private final StringRedisTemplate stringRedisTemplate;
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
     private final UserLearningProgressMapper userLearningProgressMapper;
     private final QuestionsMapper questionsMapper;
     private final UserAnswersMapper userAnswersMapper;
+    private final RestTemplate restTemplate;
 
     /**
      * 生成刷新令牌并设置Cookie，清理相关缓存
@@ -371,9 +379,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     //  获取用户已有的技能数据
     @Override
-    public Result<FetchSkillKnowDTO> userSkills(Long userId) {
-        
-        return null;
+    public Result<String> userSkills(Long userId) {
+        List<Map<String, Object>> knowledges = userLearningProgressMapper.searchUniqueValues(userId);
+
+        List<List<String>> skillsMatrix = knowledges.stream()
+                .map(m -> Arrays.asList(
+                        String.valueOf(m.get("job_name")),
+                        String.valueOf(m.get("skill_name"))
+                ))
+                .collect(Collectors.toList());
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("skills", skillsMatrix);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        String result = restTemplate.postForObject(
+                URL + "/api/skill/fetchAllSkill",
+                entity,
+                String.class
+        );
+        System.out.println(result);
+        return Result.success(result);
     }
 
     //  获取用户已经生成题目的数据
@@ -397,7 +426,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     //  更新用户评分和题目的状态
     @Override
-    public Result<ResponseCode> submitQuestionAnswer(SubmitQuestionAnswerDTO dto) {
+    public Result<Object> submitQuestionAnswer(SubmitQuestionAnswerDTO dto) {
         try{
             //原本的分数
             QueryWrapper<UserLearningProgress> wrapper = new QueryWrapper<>();
@@ -420,18 +449,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             //获取的分数
             int getscore = 0;
             if (correct == 0){
-                userAnswersMapper.updateUserCorrect(dto.getUser_id(),dto.getQuestion_id(),dto.getIs_correct());
                 if (dto.getIs_correct() == 1){
-                    if (dto.getQuestion_type().equals("judge")){
-                        getscore = 1;
-                    } else if (dto.getQuestion_type().equals("choice")) {
-                        getscore = 2;
+                    if (dto.getQuestion_type().equals("analysis")) {
+                        Map<String, Object> requestBody = new HashMap<>();
+                        requestBody.put("questionText", dto.getQuestionText());
+                        requestBody.put("userInput", dto.getUserInput());
+                        requestBody.put("correctAnswer", dto.getCorrectAnswer());
+
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+
+                        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+                        String response = restTemplate.postForObject(URL + "/api/skill/analysisAI", entity, String.class);
+
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode root = mapper.readTree(response);
+
+                        int AIscore = root.path("data").path("score").asInt();
+                        String AIreason = root.path("data").path("reason").asText();
+                        if (AIscore < 80){
+                            dto.setIs_correct(0);
+                        }
+                        getscore = (int) (AIscore * 0.05);
+                        userLearningProgressMapper.updateUserScore(dto.getUser_id(),dto.getJob_name(),dto.getSkill_name(),dto.getKnowledge_name(),score + getscore);
+                        userAnswersMapper.updateUserCorrect(dto.getUser_id(),dto.getQuestion_id(),dto.getIs_correct(),0);
+                        List<String> result = new ArrayList<>();
+                        result.add(String.valueOf(AIscore));
+                        result.add(AIreason);
+                        return Result.success(result);
+                    }else {
+                        getscore = switch (dto.getQuestion_type()) {
+                            case "judge" -> 1;
+                            case "choice" -> 2;
+                            case "fill" -> 3;
+                            default -> getscore;
+                        };
                     }
                 }else {
                     return Result.success(SUCCESS);
                 }
             } else if (correct == 1) {
-                return Result.success(SUCCESS);
+                return Result.success();
             }else {
                 return Result.success(FAIL);
             }
@@ -444,6 +502,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             System.out.println("用户评分/题目状态错误" + e);
             return Result.success(FAIL);
         }
+    }
+
+    //  更新收藏题目
+    @Override
+    public Result<ResponseCode> collectQuestion(SubmitQuestionAnswerDTO dto) {
+        //原本的题目状态
+        QueryWrapper<UserAnswers> wrapper = new QueryWrapper<>();
+        wrapper.select("is_collect")
+                .eq("user_id", dto.getUser_id())
+                .eq("question_id", dto.getQuestion_id());
+        UserAnswers questions = userAnswersMapper.selectOne(wrapper);
+        int collect = questions.getIsCollect();
+
+        if (collect == 0){
+            UserAnswers answers = new UserAnswers();
+            answers.setIsCollect(1);
+            QueryWrapper<UserAnswers> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("user_id", dto.getUser_id())
+                        .eq("question_id",dto.getQuestion_id());
+            userAnswersMapper.update(answers, queryWrapper);
+        }
+        return Result.success();
     }
 
 }

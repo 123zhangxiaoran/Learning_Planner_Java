@@ -20,4 +20,5 @@ public class QuestionWithAnswerStatusDTO {
     private String skillName;
     private String knowledgeName;
     private String jobName;
+    private Integer isCollect;
 }

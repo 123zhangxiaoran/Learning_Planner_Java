@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface UserLearningProgressMapper extends BaseMapper<UserLearningProgress> {
@@ -24,4 +25,9 @@ public interface UserLearningProgressMapper extends BaseMapper<UserLearningProgr
                            @Param("skill_name") String skill_name,
                          @Param("knowledge_name") String knowledge_name,
                          @Param("score") int score);
+
+    List<UserLearningProgress> selectScore(@Param("user_id") Long user_id,
+                                           @Param("job_name") String job_name,
+                                           @Param("skill_name") String skill_name);
+    List<Map<String, Object>> searchUniqueValues(@Param("user_id") Long userId);
 }

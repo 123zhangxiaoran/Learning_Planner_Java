@@ -29,4 +29,17 @@
         SET score = #{score}
         WHERE user_id = #{user_id} AND skill_name = #{skill_name} AND job_name = #{job_name} AND knowledge_name = #{knowledge_name}
     </update>
+    <select id="selectScore">
+        SELECT knowledge_name, score
+        FROM user_learning_progress
+        WHERE user_id = #{user_id}
+          AND skill_name = #{skill_name}
+          AND job_name = #{job_name}
+    </select>
+
+    <select id="searchUniqueValues" resultType="map">
+        SELECT DISTINCT job_name,skill_name
+        FROM user_learning_progress
+        WHERE user_id = #{user_id}
+    </select>
 </mapper>

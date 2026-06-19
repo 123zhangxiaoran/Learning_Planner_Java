@@ -23,4 +23,7 @@ public class UserAnswers implements Serializable {
 
     /// 题目状态
     private Integer isCorrect;
+
+    /// 收藏状态
+    private Integer isCollect;
 }

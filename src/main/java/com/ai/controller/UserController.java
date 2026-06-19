@@ -96,7 +96,7 @@ public class UserController {
     获取具体技能知识点
      */
     @GetMapping("/userKnowledgeData/{userId}")
-    public Result<FetchSkillKnowDTO> userSkills(@PathVariable Long userId) {
+    public Result<String> userSkills(@PathVariable Long userId) {
         return userService.userSkills(userId);
     }
 
@@ -120,7 +120,15 @@ public class UserController {
     更新对应题目答对状态和评分
      */
     @PostMapping("/submitQuestionAnswer")
-    public Result<ResponseCode> submitQuestionAnswer(@RequestBody SubmitQuestionAnswerDTO dto) {
+    public Result<Object> submitQuestionAnswer(@RequestBody SubmitQuestionAnswerDTO dto) {
         return userService.submitQuestionAnswer(dto);
+    }
+
+    /*
+    收藏题目数据
+     */
+    @PostMapping("/collectQuestion")
+    public Result<ResponseCode> collectQuestion(@RequestBody SubmitQuestionAnswerDTO dto) {
+        return userService.collectQuestion(dto);
     }
 }

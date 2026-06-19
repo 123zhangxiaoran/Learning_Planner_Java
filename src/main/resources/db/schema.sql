@@ -51,6 +51,7 @@ CREATE TABLE user_answers (
     user_id BIGINT NOT NULL COMMENT '用户ID（与user_career_goal.user_id一致）',
     question_id VARCHAR(32) NOT NULL COMMENT '题目ID',
     is_correct TINYINT(1) DEFAULT 0 COMMENT '是否正确',
+    is_collect TINYINT(1) DEFAULT 0 COMMENT '是否收藏',
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, question_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户答题记录';

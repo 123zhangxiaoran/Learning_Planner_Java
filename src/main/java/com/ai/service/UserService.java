@@ -29,11 +29,13 @@ public interface UserService extends IService<User> {
     //获取用户选择的技能数据
     Result<List<UserLearningProgress>> userSelectedSkills(Long userId);
     //获取用户已有的技能数据
-    Result<FetchSkillKnowDTO> userSkills(Long userId);
+    Result<String> userSkills(Long userId);
     //获取各自用户的题目数据
     Result<List<QuestionWithAnswerStatusDTO>> getQuestions(Long userId);
    //删除用户选择的技能
     Result<ResponseCode> deleteSkill(DeleteSkillDTO dto);
     //更新用户评分和题目的状态
-    Result<ResponseCode> submitQuestionAnswer(SubmitQuestionAnswerDTO dto);
+    Result<Object> submitQuestionAnswer(SubmitQuestionAnswerDTO dto);
+    //更新收藏题目
+    Result<ResponseCode> collectQuestion(SubmitQuestionAnswerDTO dto);
 }

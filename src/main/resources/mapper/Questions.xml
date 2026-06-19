@@ -29,6 +29,7 @@
         <result column="knowledge_name" property="knowledgeName" jdbcType="VARCHAR"/>
         <result column="job_name" property="jobName" jdbcType="VARCHAR"/>
         <result column="is_correct" property="isCorrect" jdbcType="TINYINT"/>
+        <result column="is_collect" property="isCollect" jdbcType="TINYINT"/>
     </resultMap>
 
     <!-- 查询所有题目及指定用户的答题状态（包含未答题目） -->
@@ -44,6 +45,7 @@
             q.knowledge_name,
             q.job_name,
             ua.is_correct,
+            ua.is_collect,
             q.question_id
         FROM questions q
                  LEFT JOIN user_answers ua

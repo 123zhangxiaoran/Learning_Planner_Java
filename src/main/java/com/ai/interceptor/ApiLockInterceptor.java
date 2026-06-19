@@ -22,7 +22,7 @@ public class ApiLockInterceptor implements HandlerInterceptor {
 
     private static final List<String> WHITELIST_PATTERNS = Arrays.asList(
             "/api/user/submitQuestionAnswer",
-            ""
+            "/api/user/collectQuestion"
     );
 
     // 构造器注入

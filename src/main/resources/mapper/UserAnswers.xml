@@ -6,13 +6,15 @@
         INSERT INTO user_answers (
         user_id,
         question_id,
-        is_correct
+        is_correct,
+        is_collect
         ) VALUES
         <foreach collection="list" item="item" separator=",">
             (
             #{item.userId},
             #{item.questionId},
-            #{item.isCorrect}
+            #{item.isCorrect},
+            #{item.isCollect}
             )
         </foreach>
     </insert>

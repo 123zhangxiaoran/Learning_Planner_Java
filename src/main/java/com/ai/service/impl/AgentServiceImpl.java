@@ -47,6 +47,8 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
     private ObjectMapper objectMapper;
     @Resource
     private QuestionAsyncService asyncService;
+    @Resource
+    private UserLearningProgressMapper userLearningProgressMapper;
 
 
     /**
@@ -285,8 +287,15 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
     @Override
     public Result<String> generateQuestions(AnalyticalSkillDTO dto) {
         // 查找个人知识点对应是评分
-        
-
+        List<UserLearningProgress> ScoreData = userLearningProgressMapper.selectScore(dto.getUser_id(),dto.getJob_name(),dto.getSkill_name());
+        List<List<String>> results = new ArrayList<>();
+        for (UserLearningProgress item : ScoreData) {
+            List<String> row = new ArrayList<>();
+            row.add(item.getKnowledgeName());
+            row.add(String.valueOf(item.getScore()));
+            results.add(row);
+        }
+        dto.setDifficulty(results);
         // 设置请求头为 JSON 格式
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

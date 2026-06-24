@@ -285,7 +285,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
 
     // 生成个人专属题目
     @Override
-    public Result<String> generateQuestions(AnalyticalSkillDTO dto) {
+    public void submitTask(AnalyticalSkillDTO dto) {
         // 查找个人知识点对应是评分
         List<UserLearningProgress> ScoreData = userLearningProgressMapper.selectScore(dto.getUser_id(),dto.getJob_name(),dto.getSkill_name());
         List<List<String>> results = new ArrayList<>();
@@ -311,13 +311,13 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
             JsonNode root = objectMapper.readTree(result);
             JsonNode dataArray = root.path("data");
             List<Questions> questions = new ArrayList<>();
-            String uuid = UUID.randomUUID().toString().replace("-", "");
+
             for (JsonNode item : dataArray) {
                 Questions entity = new Questions();
                 // 生成 UUID 作为主键
                 entity.setId(UUID.randomUUID().toString().replace("-", ""));
                 // 生成 UUID 作为题集id
-                entity.setQuestionId(uuid);
+                entity.setQuestionId(dto.getUuid());
                 // questionText题目
                 entity.setQuestionText(item.path("stem").asText());
                 // options（JSON 数组）选项
@@ -349,7 +349,7 @@ public class AgentServiceImpl extends ServiceImpl<UserCareerGoalMapper, UserCare
             // 也可以抛出自定义运行时异常
             throw new RuntimeException("JSON 解析失败", e);
         }
-        return Result.success("生成成功");
+        Result.success("生成成功");
     }
 
 }

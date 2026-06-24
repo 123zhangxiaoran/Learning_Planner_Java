@@ -10,6 +10,7 @@ public class AnalyticalSkillDTO {
     private String job_name;
     private String userinput;
     private Long user_id;
+    private String uuid;
     private List<List<String>> dimensions;
     private List<List<String>> difficulty;
  }

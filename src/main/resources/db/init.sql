@@ -1,8 +1,14 @@
 CREATE DATABASE IF NOT EXISTS learning_planner DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE learning_planner;
 
-/*==================== 用户基础信息表 ====================*/
+/*==================== 先删有外键依赖的表 ====================*/
+DROP TABLE IF EXISTS user_career_goal;
+DROP TABLE IF EXISTS user_answers;
+DROP TABLE IF EXISTS user_learning_progress;
+DROP TABLE IF EXISTS questions;
 DROP TABLE IF EXISTS user;
+
+/*==================== 用户基础信息表 ====================*/
 CREATE TABLE user
 (
     user_id     BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID',
@@ -16,7 +22,6 @@ CREATE TABLE user
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户基础信息表';
 
 /*==================== 用户目标岗位表 ====================*/
-DROP TABLE IF EXISTS user_career_goal;
 CREATE TABLE user_career_goal
 (
     user_id   BIGINT NOT NULL COMMENT '用户ID（关联user表）',
@@ -29,7 +34,6 @@ CREATE TABLE user_career_goal
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户目标岗位表';
 
 /*==================== 题目表 ====================*/
-DROP TABLE IF EXISTS questions;
 CREATE TABLE questions (
     id VARCHAR(32) PRIMARY KEY COMMENT '题目ID',
     question_text TEXT NOT NULL COMMENT '题干',
@@ -38,17 +42,16 @@ CREATE TABLE questions (
     explanation TEXT COMMENT '解析',
     question_type ENUM('choice','judge','fill','analysis') NOT NULL COMMENT '题型',
     difficulty_score INT NOT NULL COMMENT '题目难度（0-100）',
-    skill_name VARCHAR(50) NOT NULL COMMENT '关联的技能名称（与user_learning_progress.skill_name对应）',
-    knowledge_name VARCHAR(50) NOT NULL COMMENT '关联的知识点名称（与user_learning_progress.knowledge_name对应）',
-    job_name VARCHAR(20) NOT NULL COMMENT '关联的岗位名称（与user_learning_progress.job_name对应）',
+    skill_name VARCHAR(50) NOT NULL COMMENT '关联的技能名称',
+    knowledge_name VARCHAR(50) NOT NULL COMMENT '关联的知识点名称',
+    job_name VARCHAR(20) NOT NULL COMMENT '关联的岗位名称',
     question_id VARCHAR(32) NOT NULL COMMENT '题集id',
     INDEX idx_skill_knowledge (skill_name, knowledge_name, job_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='题目表';
 
 /*==================== 用户答题记录 ====================*/
-DROP TABLE IF EXISTS user_answers;
 CREATE TABLE user_answers (
-    user_id BIGINT NOT NULL COMMENT '用户ID（与user_career_goal.user_id一致）',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
     question_id VARCHAR(32) NOT NULL COMMENT '题目ID',
     is_correct TINYINT(1) DEFAULT 0 COMMENT '是否正确',
     is_collect TINYINT(1) DEFAULT 0 COMMENT '是否收藏',
@@ -57,7 +60,6 @@ CREATE TABLE user_answers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户答题记录';
 
 /*==================== 用户学习进度详情表 ====================*/
-DROP TABLE IF EXISTS user_learning_progress;
 CREATE TABLE user_learning_progress
 (
     user_id         BIGINT NOT NULL COMMENT '用户ID',

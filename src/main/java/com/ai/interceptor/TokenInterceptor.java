@@ -2,6 +2,7 @@ package com.ai.interceptor;
 
 import com.ai.util.JwtUtil;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
@@ -38,18 +39,33 @@ public class TokenInterceptor implements HandlerInterceptor {
 
         // 提取 Access Token
         String accessToken = getAccessTokenFromRequest(request);
+        Cookie[] cookies = request.getCookies();
         if (accessToken == null || accessToken.isEmpty()) {
-            return sendUnauthorizedResponse(response, "Token required");
-        }
-
-        // 验证并解析
-        try {
-            Claims claims = jwtUtil.parseAccessToken(accessToken);
-            String userId = claims.getSubject();
-            request.setAttribute("userId", userId);
-            return true;
-        } catch (Exception e) {
-            return sendUnauthorizedResponse(response, "Invalid token");
+            String refreshToken = null;
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("refreshToken".equals(cookie.getName())) {
+                        refreshToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+            try {
+                jwtUtil.parseAccessToken(refreshToken);
+                return true;
+            }catch (Exception e){
+                return sendUnauthorizedResponse(response);
+            }
+        } else {
+            // 验证并解析
+            try {
+                Claims claims = jwtUtil.parseAccessToken(accessToken);
+                String userId = claims.getSubject();
+                request.setAttribute("userId", userId);
+                return true;
+            } catch (Exception e) {
+                return sendUnauthorizedResponse(response);
+            }
         }
     }
 
@@ -70,10 +86,10 @@ public class TokenInterceptor implements HandlerInterceptor {
         return null;
     }
 
-    private boolean sendUnauthorizedResponse(HttpServletResponse response, String errorMessage) throws IOException {
+    private boolean sendUnauthorizedResponse(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(String.format("{\"error\":\"%s\"}", errorMessage));
+        response.getWriter().write(String.format("{\"error\":\"%s\"}", "Invalid token"));
         return false;
     }
 }

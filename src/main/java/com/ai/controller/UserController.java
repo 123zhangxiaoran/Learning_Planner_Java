@@ -109,6 +109,14 @@ public class UserController {
     }
 
     /*
+    查验题目是否生成
+     */
+    @GetMapping("/taskStatus/{uuid}")
+    public Boolean isGenerate(@PathVariable String uuid) {
+        return userService.isGenerate(uuid);
+    }
+
+    /*
     删除对应的技能
      */
     @PostMapping("/deleteSkill")

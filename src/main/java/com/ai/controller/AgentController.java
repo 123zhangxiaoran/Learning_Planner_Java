@@ -4,9 +4,13 @@ import com.ai.common.Result;
 import com.ai.dto.*;
 import com.ai.service.AgentService;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @RestController
 @RequestMapping("/agent")
@@ -14,6 +18,12 @@ public class AgentController {
 
     @Resource
     private AgentService agentService;
+    // 指定 Bean 名字
+    private final Executor taskExecutor;
+
+    public AgentController(@Qualifier("taskExecutor") Executor taskExecutor) {
+        this.taskExecutor = taskExecutor;
+    }
 
     // 接收前端页面1的会话返回岗位名称
     @PostMapping("/searchJobs")
@@ -63,6 +73,11 @@ public class AgentController {
     //  生成个人专属题目
     @PostMapping("/generateQuestions")
     public Result<String> generateQuestions(@RequestBody AnalyticalSkillDTO dto) {
-        return agentService.generateQuestions(dto);
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        dto.setUuid(uuid);
+        //异步执行耗时任务
+        CompletableFuture.runAsync(() -> agentService.submitTask(dto), taskExecutor);
+
+        return Result.success(uuid);
     }
 }

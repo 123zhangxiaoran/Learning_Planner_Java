@@ -23,5 +23,5 @@ public interface AgentService extends IService<UserCareerGoal> {
     //  保存人物画像
     Result<String> learningPath(LearningPathDTO dto);
     //  生成个人专属题目
-    Result<String> generateQuestions(AnalyticalSkillDTO dto);
+    void submitTask(AnalyticalSkillDTO dto);
 }

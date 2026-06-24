@@ -38,4 +38,6 @@ public interface UserService extends IService<User> {
     Result<Object> submitQuestionAnswer(SubmitQuestionAnswerDTO dto);
     //更新收藏题目
     Result<ResponseCode> collectQuestion(SubmitQuestionAnswerDTO dto);
+    //查验题目生成状态
+    Boolean isGenerate(String uuid);
 }

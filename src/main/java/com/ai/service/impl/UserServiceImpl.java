@@ -3,6 +3,7 @@ package com.ai.service.impl;
 import com.ai.common.ResponseCode;
 import com.ai.common.Result;
 import com.ai.dto.*;
+import com.ai.entity.Questions;
 import com.ai.entity.User;
 import com.ai.entity.UserAnswers;
 import com.ai.entity.UserLearningProgress;
@@ -401,7 +402,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 entity,
                 String.class
         );
-        System.out.println(result);
         return Result.success(result);
     }
 
@@ -445,7 +445,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                     .eq("question_id", dto.getQuestion_id());
             UserAnswers questions = userAnswersMapper.selectOne(wrapper2);
             int correct = questions.getIsCorrect();
-
             //获取的分数
             int getscore = 0;
             if (correct == 0){
@@ -467,6 +466,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
                         int AIscore = root.path("data").path("score").asInt();
                         String AIreason = root.path("data").path("reason").asText();
+
                         if (AIscore < 80){
                             dto.setIs_correct(0);
                         }
@@ -484,6 +484,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                             case "fill" -> 3;
                             default -> getscore;
                         };
+                        userAnswersMapper.updateUserCorrect(dto.getUser_id(),dto.getQuestion_id(),dto.getIs_correct(),0);
                     }
                 }else {
                     return Result.success(SUCCESS);
@@ -496,7 +497,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
             //更新本知识点的评分
             userLearningProgressMapper.updateUserScore(dto.getUser_id(),dto.getJob_name(),dto.getSkill_name(),dto.getKnowledge_name(),score + getscore);
-
             return Result.success(SUCCESS);
         }catch (Exception e){
             System.out.println("用户评分/题目状态错误" + e);
@@ -524,6 +524,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             userAnswersMapper.update(answers, queryWrapper);
         }
         return Result.success();
+    }
+
+    //查验题目生成状态
+    @Override
+    public Boolean isGenerate(String uuid) {
+        LambdaQueryWrapper<Questions> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Questions::getQuestionId,uuid);
+        return questionsMapper.exists(wrapper);
     }
 
 }
